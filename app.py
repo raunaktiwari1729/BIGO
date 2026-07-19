@@ -27,7 +27,7 @@ model, tfidf, le = load_models()
 st.title("⚡ Big-O Complexity Classifier")
 st.caption("Paste a Java solution — the model predicts its time complexity. "
            "XGBoost on 14 hand-engineered code features + TF-IDF over tokens. "
-           "Honest (problem-split) accuracy ≈ 56%.")
+           "Trained on the CodeComplex dataset (Java).")
 
 SAMPLE = """public class Main {
     public static void main(String[] args) {
