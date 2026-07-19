@@ -29,13 +29,29 @@ st.caption("Paste a Java solution — the model predicts its time complexity. "
            "XGBoost on 14 hand-engineered code features + TF-IDF over tokens. "
            "Trained on the CodeComplex dataset (Java).")
 
-SAMPLE = """public class Main {
+SAMPLE = """ public class Main {
     public static void main(String[] args) {
-        int[] a = {5, 2, 8, 1, 9, 3};
-        for (int i = 0; i < a.length; i++)
-            for (int j = 0; j < a.length - 1; j++)
-                if (a[j] > a[j + 1]) 
-                    int t = a[j]; a[j] = a[j + 1]; a[j + 1] = t;
+        int n = 3;
+        int[][] a = {{1, 2, 3}, {4, 5, 6}, {7, 8, 9}};
+        int[][] b = {{9, 8, 7}, {6, 5, 4}, {3, 2, 1}};
+        int[][] c = new int[n][n];
+
+        // O(n^3): three nested loops
+        for (int i = 0; i < n; i++) {
+            for (int j = 0; j < n; j++) {
+                for (int k = 0; k < n; k++) {
+                    c[i][j] += a[i][k] * b[k][j];
+                }
+            }
+        }
+
+        // print the result matrix
+        for (int i = 0; i < n; i++) {
+            for (int j = 0; j < n; j++) {
+                System.out.print(c[i][j] + " ");
+            }
+            System.out.println();
+        }
     }
 }"""
 
