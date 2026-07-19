@@ -5,7 +5,7 @@ import streamlit as st
 from scipy.sparse import hstack, csr_matrix
 from features import hand_features, strip_code, FEATURE_NAMES
 
-st.set_page_config(page_title="Big-O Classifier", page_icon="⚡", layout="centered")
+st.set_page_config(page_title="Big-O Classifier", layout="centered")
 
 MODEL_DIR = os.path.dirname(__file__)   # pkls sit next to this file
 
@@ -24,7 +24,7 @@ def load_models():
 
 model, tfidf, le = load_models()
 
-st.title("⚡ Big-O Complexity Classifier")
+st.title("Big-O Complexity Classifier")
 st.caption("Paste a Java solution — the model predicts its time complexity. "
            "XGBoost on 14 hand-engineered code features + TF-IDF over tokens. "
            "Trained on the CodeComplex dataset (Java).")
@@ -34,9 +34,8 @@ SAMPLE = """public class Main {
         int[] a = {5, 2, 8, 1, 9, 3};
         for (int i = 0; i < a.length; i++)
             for (int j = 0; j < a.length - 1; j++)
-                if (a[j] > a[j + 1]) {
+                if (a[j] > a[j + 1]) 
                     int t = a[j]; a[j] = a[j + 1]; a[j + 1] = t;
-                }
     }
 }"""
 
