@@ -60,3 +60,13 @@ def hand_features(raw):
     mx, n2, n3 = _loop_depth(code)
     return [loc, num_for, num_while, num_loops, mx, n2, n3,
             num_sort, num_hash, has_rec, num_log, num_bin, num_shift, num_methods]
+
+EXTRA_NAMES = ["num_if", "num_break", "num_switch", "num_jump",
+               "has_pq", "num_stmt", "num_vars"]
+
+def extra_features(raw):
+    code = strip_code(raw)
+    f = lambda p: len(re.findall(p, code))
+    return [f(r"\bif\b"), f(r"\bbreak\b"), f(r"\bswitch\b"),
+            f(r"\bcontinue\b|\breturn\b"), f(r"\bPriorityQueue\b"),
+            f(r";"), f(r"\b(?:int|long|double|String|char|boolean)\s+\w+")]
