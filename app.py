@@ -1,13 +1,12 @@
-import os, pickle
+import os, pickle, joblib
 import numpy as np
 import pandas as pd
 import streamlit as st
-from scipy.sparse import hstack, csr_matrix
-from features import hand_features, strip_code, FEATURE_NAMES
+from features import hand_features, extra_features, FEATURE_NAMES, EXTRA_NAMES
 
 st.set_page_config(page_title="Big-O Classifier", layout="centered")
 
-MODEL_DIR = os.path.dirname(__file__)   # pkls sit next to this file
+MODEL_DIR = os.path.dirname(__file__)   
 
 BIGO = {
     "constant": "O(1)", "logn": "O(log n)", "linear": "O(n)",
@@ -17,16 +16,15 @@ BIGO = {
 
 @st.cache_resource
 def load_models():
-    m  = pickle.load(open(os.path.join(MODEL_DIR, "xgb_model.pkl"), "rb"))
-    tf = pickle.load(open(os.path.join(MODEL_DIR, "tfidf.pkl"), "rb"))
+    m  = joblib.load(os.path.join(MODEL_DIR, "et_model.pkl"))
     le = pickle.load(open(os.path.join(MODEL_DIR, "label_encoder.pkl"), "rb"))
-    return m, tf, le
+    return m, le
 
-model, tfidf, le = load_models()
+model, le = load_models()
 
 st.title("Big-O Complexity Classifier")
 st.caption("Paste a Java solution — the model predicts its time complexity. "
-           "XGBoost on 14 hand-engineered code features + TF-IDF over tokens. "
+           "Extra Trees on 21 hand-engineered code features. "
            "Trained on the CodeComplex dataset (Java).")
 
 SAMPLE = """ public class Main {
@@ -61,8 +59,8 @@ if st.button("Predict complexity", type="primary"):
     if not code.strip():
         st.warning("Paste some Java code first.")
     else:
-        hand = np.array([hand_features(code)], dtype=float)
-        X = hstack([csr_matrix(hand), tfidf.transform([strip_code(code)])]).tocsr()
+        feats = hand_features(code) + extra_features(code)
+        X = np.array([feats], dtype=float)
         proba = model.predict_proba(X)[0]
         i = int(proba.argmax())
         cls = le.classes_[i]
@@ -76,10 +74,9 @@ if st.button("Predict complexity", type="primary"):
             st.progress(float(proba[j]), text=f"{BIGO[c]}  ({c}) — {proba[j]*100:.1f}%")
 
         with st.expander("Extracted hand features (why the model decided this)"):
-            st.dataframe(pd.DataFrame({"feature": FEATURE_NAMES,
-                                       "value": hand_features(code)}),
+            st.dataframe(pd.DataFrame({"feature": FEATURE_NAMES + EXTRA_NAMES,
+                                       "value": feats}),
                          hide_index=True, use_container_width=True)
 
 st.divider()
-st.caption("Trained on the CodeComplex dataset (Java). Note: evaluated with a "
-           "problem-level split so no problem's solutions appear in both train and test.")
+st.caption("Trained on the CodeComplex dataset (Java).")
