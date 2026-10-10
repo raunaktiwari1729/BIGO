@@ -97,6 +97,8 @@ The project also explores Abstract Syntax Tree (AST) features using Java parsing
 
 ```text
 BIGO/
+├── .gitignore
+├── requirements.txt
 ├── app.py
 ├── features.py
 ├── ast_features.py
