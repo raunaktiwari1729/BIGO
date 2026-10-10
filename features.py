@@ -2,7 +2,6 @@
 import re
 
 
-# The order of these features must match the training pipeline.
 FEATURE_NAMES = [
     "loc",
     "num_for",
