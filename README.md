@@ -76,11 +76,11 @@ These results suggest that handcrafted features provide a useful baseline, while
 
 **AST-based Features**
 
-The project also explores Abstract Syntax Tree (AST) features using Java parsing. These features capture structural information such as loop nesting, recursion, and patterns within loop bodies. The recorded experiments show modest improvements over handcrafted features alone.
+The project also explores Abstract Syntax Tree (AST) features using Java parsing. These features capture structural information such as loop nesting, recursion, and patterns within loop bodies. The recorded experiments show modest improvements(approx. 2%) over handcrafted features alone.
 
 **GraphCodeBERT**
 
-`Transformer.ipynb` explores fine-tuning `microsoft/graphcodebert-base` for seven-class complexity classification. Its final accuracy remains to be recorded after completing the experiment.
+`Transformer.ipynb` explores fine-tuning `microsoft/graphcodebert-base` for seven-class complexity classification. Its final accuracy doesn't improve over tree models.
 
 ## Tech Stack
 
