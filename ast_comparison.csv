@@ -1,0 +1,5 @@
+model,regex (21),AST (23),regex + AST (44)
+Extra Trees,56.0,45.4,58.2
+Logistic Regression,52.9,43.7,54.5
+Random Forest,55.9,46.1,58.2
+XGBoost,55.9,47.0,57.9
