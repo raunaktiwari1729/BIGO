@@ -2,6 +2,7 @@
 import re
 
 
+# The order of these features must match the training pipeline.
 FEATURE_NAMES = [
     "loc",
     "num_for",
@@ -19,6 +20,7 @@ FEATURE_NAMES = [
     "num_methods",
 ]
 
+# Additional features extracted from Java code.
 EXTRA_NAMES = [
     "num_if",
     "num_break",
@@ -32,15 +34,16 @@ EXTRA_NAMES = [
 
 def strip_code(code):
     """Remove comments and mask string and character literals."""
+    code = re.sub(r"//.*", "", code)
+    code = re.sub(r"/\*.*?\*/", "", code, flags=re.S)
     code = re.sub(r'"(\\.|[^"\\])*"', '""', code)
     code = re.sub(r"'(\\.|[^'\\])*'", "''", code)
-    code = re.sub(r"//[^\n]*", "", code)
-    code = re.sub(r"/\*.*?\*/", "", code, flags=re.S)
+
     return code
 
 
 def _loop_depth(code):
-    """Estimate maximum loop nesting depth using braces."""
+    """Estimate loop nesting depth using loop keywords and braces."""
     depth = 0
     loop_levels = []
     max_loop = 0
@@ -48,32 +51,31 @@ def _loop_depth(code):
     nested3 = 0
     pending = False
 
-    tokens = re.finditer(r"\bfor\b|\bwhile\b|\{|\}", code)
+    # Track loops and braces in their order of appearance.
+    for token in re.finditer(r"\bfor\b|\bwhile\b|\{|\}", code):
+        symbol = token.group()
 
-    for token in tokens:
-        value = token.group()
-
-        if value in ("for", "while"):
+        if symbol in ("for", "while"):
             pending = True
 
-        elif value == "{":
+        elif symbol == "{":
             depth += 1
 
             if pending:
                 loop_levels.append(depth)
-                current = len(loop_levels)
+                current_depth = len(loop_levels)
 
-                max_loop = max(max_loop, current)
+                max_loop = max(max_loop, current_depth)
 
-                if current >= 2:
+                if current_depth >= 2:
                     nested2 += 1
 
-                if current >= 3:
+                if current_depth >= 3:
                     nested3 += 1
 
                 pending = False
 
-        elif value == "}":
+        elif symbol == "}":
             if loop_levels and loop_levels[-1] == depth:
                 loop_levels.pop()
 
@@ -83,69 +85,70 @@ def _loop_depth(code):
 
 
 def hand_features(raw):
-    """Extract the original 14 handcrafted code features."""
+    """Extract the 14 primary handcrafted features."""
     code = strip_code(raw)
 
-    loc = sum(1 for line in code.splitlines() if line.strip())
-
+    # Basic code and loop statistics.
+    loc = len([line for line in code.split("\n") if line.strip()])
     num_for = len(re.findall(r"\bfor\b", code))
     num_while = len(re.findall(r"\bwhile\b", code))
     num_loops = num_for + num_while
 
+    # Detect common sorting and hash-based data structures.
     num_sort = len(
         re.findall(r"\.sort\s*\(|Arrays\.sort|Collections\.sort", code)
     )
-
     num_hash = len(
         re.findall(r"\b(HashMap|HashSet|TreeMap|TreeSet)\b", code)
     )
 
+    # Detect operations and patterns associated with logarithmic algorithms.
     num_shift = len(re.findall(r"<<|>>", code))
-
     num_log = len(
         re.findall(r"[*/]=\s*2\b|<<=|>>=|\*\s*2\b|/\s*2\b", code)
     )
-
     num_bin = len(
         re.findall(r"\bmid\b|binarySearch|\b(lo|hi|low|high)\b", code)
     )
 
+    # Count method declarations using the original regular expression.
     num_methods = len(
         re.findall(
-            r"\b(?:public|private|protected|static)"
-            r"[\w<>\[\]]*\s+\w+\s*\([^)]*\)\s*\{",
+            r"\b(?:public|private|protected|static)[\w<>\[\]]*"
+            r"\s+\w+\s*\([^)]*\)\s*\{",
             code,
         )
     )
 
-    method_names = re.findall(
-        r"\b\w+\s+(\w+)\s*\([^)]*\)\s*\{", code
-    )
+    # Estimate recursion by checking whether a method name occurs
+    # more than once as a function call.
+    names = re.findall(r"\b\w+\s+(\w+)\s*\([^)]*\)\s*\{", code)
+    has_rec = 0
 
-    has_recursion = 0
-
-    for name in set(method_names):
+    for method_name in set(names):
         calls = re.findall(
-            r"\b" + re.escape(name) + r"\s*\(", code
+            r"\b" + re.escape(method_name) + r"\s*\(",
+            code,
         )
 
         if len(calls) > 1:
-            has_recursion = 1
+            has_rec = 1
             break
 
-    max_loop_depth, nested2, nested3 = _loop_depth(code)
+    max_depth, nested2, nested3 = _loop_depth(code)
 
+    # Preserve the exact feature order used by the original model.
     return [
         loc,
         num_for,
         num_while,
         num_loops,
-        max_loop_depth,
+        max_depth,
         nested2,
         nested3,
         num_sort,
         num_hash,
-        has_recursion,
+        has_rec,
         num_log,
         num_bin,
         num_shift,
@@ -154,11 +157,11 @@ def hand_features(raw):
 
 
 def extra_features(raw):
-    """Extract the original 7 additional code features."""
+    """Extract the seven additional handcrafted features."""
     code = strip_code(raw)
 
-    def count(pattern):
-        return len(re.findall(pattern, code))
+    # Count occurrences matching each original feature pattern.
+    count = lambda pattern: len(re.findall(pattern, code))
 
     return [
         count(r"\bif\b"),
